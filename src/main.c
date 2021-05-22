@@ -1,13 +1,47 @@
 #include <efi/efi.h>
 #include <efi/efilib.h>
 #include <elf.h> 
+#include "../includes/efi-loader.h"
 
-#define version (char *) "0.1a"
 //Remember uefi call wrapper layout
 //uefi_call_wrapper(function, argc, args)
 
 typedef unsigned long long size_t; // 64 bit unsigned number.
+const static CHAR16* welcomeMsg = L"Cait's EFI system loader \r\nVersion: %d.%d.%c\r\n";
 
+EFI_FILE* load_kernel(){
+    //HipptyHoopity Todo: 
+}
+
+//This will be moved into it's own file. Basically the idea is to produce cleaner looking code.
+void clr_scr()
+{
+    uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
+}
+
+
+EFI_STATUS efi_main (EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable) 
+{
+    //InitializeLib efi libary system table and image handle 
+    InitializeLib(imageHandle, systemTable);
+    //Clear the screen of current contents. As it could still have left overs from the firmware manaufacter such as the motherboard logo.
+    clr_scr();
+    Print(welcomeMsg, EFILOADER_VER_MAJ, EFILOADER_VER_MIN, EFILOADER_STABLE);
+    
+    //Load Kernel File into memory from system ESP partion
+    EFI_FILE* kerImg = NULL;
+    //Check our kernel is valid
+    if(kerImg == NULL) Print(L"Unable to load kernel image\r\n");
+    else {
+	
+    }
+    //Get computer memory map for use later
+    while(1);
+    return EFI_SUCCESS;
+}
+
+/*
+ *
 //I spent ages on this just to find it was frezzing because I forgot to use uefi_call_wrapper
 EFI_FILE *LoadFile(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 {
@@ -42,21 +76,8 @@ typedef struct {
     UINTN memMapSize;
     UINTN memMapDescSize;
 } MemoryMap;
-
-EFI_STATUS efi_main (EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable) 
-{
-    //InitializeLib efi libary system table and image handle 
-    InitializeLib(imageHandle, systemTable);
-
-    //Clear the screen of current contents. As it could still have left overs from the firmware manaufacter such as the motherboard logo.
-    uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
-    
-    //Load Kernel File into memory from system ESP partion
-    
-    return EFI_SUCCESS;
-}
-
-/*EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
+ *
+ * EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     InitializeLib(ImageHandle, SystemTable);
     
     //Clearing is done to just ensure logos from firmware or mobo mana are no longer displayed
