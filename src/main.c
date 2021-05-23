@@ -11,6 +11,7 @@ const static CHAR16* welcomeMsg = L"Cait's EFI system loader \r\nVersion: %d.%d.
 
 EFI_FILE* load_kernel(){
     //HipptyHoopity Todo: 
+    return NULL;
 }
 
 //This will be moved into it's own file. Basically the idea is to produce cleaner looking code.
@@ -32,9 +33,9 @@ EFI_STATUS efi_main (EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
     EFI_FILE* kerImg = NULL;
     //Check our kernel is valid
     if(kerImg == NULL) Print(L"Unable to load kernel image\r\n");
-    else {
-	
-    }
+    else Print(L"Kernel successfully loaded\r\n");
+    
+
     //Get computer memory map for use later
     while(1);
     return EFI_SUCCESS;
