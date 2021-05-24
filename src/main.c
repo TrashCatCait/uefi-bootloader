@@ -5,13 +5,49 @@
 
 //Remember uefi call wrapper layout
 //uefi_call_wrapper(function, argc, args)
+//Casting to (CHAR16 *) isn't really needed but it fixes issues of warning showing up in my text editor.
 
 typedef unsigned long long size_t; // 64 bit unsigned number.
-const static CHAR16* welcomeMsg = L"Cait's EFI system loader \r\nVersion: %d.%d.%c\r\n";
+const static CHAR16* welcomeMsg = (CHAR16 *)L"Cait's EFI system loader \r\nVersion: %d.%d.%c\r\n";
 
-EFI_FILE* load_kernel(){
-    //HipptyHoopity Todo: 
-    return NULL;
+//Get volume to load files from. We use the imagehandle from efi main to get the ESP partition.
+//This application was loaded from. Then we use libOpenRoot to open the root volume in a file handle
+EFI_FILE_HANDLE getVolume(EFI_HANDLE image)
+{
+    EFI_LOADED_IMAGE *loadedImage = NULL; // Loaded Image interface used for opening device
+    EFI_GUID imageGUID = EFI_LOADED_IMAGE_PROTOCOL_GUID; // Image GUID interface  
+    
+    //populate our loaded image
+    uefi_call_wrapper(BS->HandleProtocol, 3, image, &imageGUID, (void **) &loadedImage);
+
+    EFI_FILE_HANDLE loadedRoot; //loaded root partition volume 
+    
+    //Use this instead of IOVOLUME
+    loadedRoot = LibOpenRoot(loadedImage->DeviceHandle);
+
+    //Return our loaded root file
+    return loadedRoot;
+}
+
+UINT8 *load_kernel(EFI_FILE_HANDLE root, CHAR16* fileName){
+    //HipptyHoopity Todo:
+    EFI_FILE* loadedKernel = NULL;
+    UINT64 fileSize;
+    EFI_FILE_HANDLE kernelFileHandle;
+    
+    //Open our file
+    uefi_call_wrapper(root->Open, 5, root, &kernelFileHandle, fileName, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY | EFI_FILE_HIDDEN | EFI_FILE_SYSTEM);
+    
+    //Get the files actual size
+    EFI_FILE_INFO* fileInfo = LibFileInfo(kernelFileHandle); //File information sturcuture. 
+    fileSize = fileInfo->FileSize;//48644864
+    FreePool(fileInfo); //Free it as we are done with it
+
+    UINT8 *buffer = AllocatePool(fileSize); //AllocatePool for reading our file into 
+    //read the file
+    uefi_call_wrapper(kernelFileHandle->Read, 3, kernelFileHandle, &fileSize, buffer);
+    Print((CHAR16*) L"0x%x\r\n", *buffer ); 
+    return buffer;
 }
 
 //This will be moved into it's own file. Basically the idea is to produce cleaner looking code.
@@ -26,18 +62,32 @@ EFI_STATUS efi_main (EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
     //InitializeLib efi libary system table and image handle 
     InitializeLib(imageHandle, systemTable);
     //Clear the screen of current contents. As it could still have left overs from the firmware manaufacter such as the motherboard logo.
-    clr_scr();
+
+    
+    clr_scr(); 
     Print(welcomeMsg, EFILOADER_VER_MAJ, EFILOADER_VER_MIN, EFILOADER_STABLE);
-    
+    //Open our ESP partions volume. 
+    EFI_FILE_HANDLE rootPart = getVolume(imageHandle);
     //Load Kernel File into memory from system ESP partion
-    EFI_FILE* kerImg = NULL;
-    //Check our kernel is valid
-    if(kerImg == NULL) Print(L"Unable to load kernel image\r\n");
-    else Print(L"Kernel successfully loaded\r\n");
+    UINT8* kerImg = load_kernel(rootPart, (CHAR16 *)L"kernel.elf");
     
+    if(kerImg == NULL) Print((CHAR16 *)L"Unable to load kernel image\r\n");
+    else Print((CHAR16 *)L"Kernel successfully loaded\r\n");
+    
+    Elf64_Ehdr header;
+
+    Print((CHAR16*)L"%d\r\n", sizeof(header));
 
     //Get computer memory map for use later
-    while(1);
+   
+    kerImg += 0x1000;
+    //Attempt to boot our kernel
+    int(*KernelStart)() = ((__attribute__((sysv_abi)) int(*)() ) kerImg);
+
+    Print((CHAR16 *)L"%d\r\n", KernelStart());
+    //Wait for user input this is good for testing output
+    Print((CHAR16 *)L"Press any key to exit...\r\n");
+    WaitForSingleEvent(ST->ConIn->WaitForKey, 0);
     return EFI_SUCCESS;
 }
 
