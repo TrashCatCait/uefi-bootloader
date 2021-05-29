@@ -16,7 +16,7 @@ main.iso: main.img
 	xorriso -as mkisofs -R -f -e $^ -no-emul-boot -o $@ iso
 
 main.img: build ./bootx64.efi 
-	dd if=/dev/zero of=$@ bs=1M count=200
+	dd if=/dev/zero of=$@ bs=1M count=100
 	mkfs.vfat -F32 ./main.img
 	mmd -i $@ ::/EFI
 	mmd -i $@ ::/EFI/BOOT

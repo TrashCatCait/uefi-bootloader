@@ -8,7 +8,7 @@
 //Casting to (CHAR16 *) isn't really needed but it fixes issues of warning showing up in my text editor.
 
 typedef unsigned long long size_t; // 64 bit unsigned number.
-const static CHAR16* welcomeMsg = (CHAR16 *)L"Cait's EFI system loader \r\nVersion: %d.%d.%c\r\n";
+const static CHAR16* welcomeMsg = (CHAR16 *)L"Cait's EFI system loader\r\nVersion: %d.%d.%c\r\n";
 
 //Get volume to load files from. We use the imagehandle from efi main to get the ESP partition.
 //This application was loaded from. Then we use libOpenRoot to open the root volume in a file handle
@@ -40,15 +40,20 @@ UINT8 *load_kernel(EFI_FILE_HANDLE root, CHAR16* fileName){
     
     //Get the files actual size
     EFI_FILE_INFO* fileInfo = LibFileInfo(kernelFileHandle); //File information sturcuture. 
-    fileSize = fileInfo->FileSize;//48644864
+    fileSize = fileInfo->FileSize; //48644864
     FreePool(fileInfo); //Free it as we are done with it
 
     UINT8 *buffer = AllocatePool(fileSize); //AllocatePool for reading our file into 
     //read the file
     uefi_call_wrapper(kernelFileHandle->Read, 3, kernelFileHandle, &fileSize, buffer);
-    Print((CHAR16*) L"0x%x\r\n", *buffer ); 
+    Print((CHAR16*) L"0x%x\r\n", buffer[73]); 
+    
+
     return buffer;
 }
+
+//This code is not effcient at all but is easy to test if it works with. 
+//NOTE TO SELF REPLACE THIS FUNCTION 
 
 //This will be moved into it's own file. Basically the idea is to produce cleaner looking code.
 void clr_scr()
@@ -62,7 +67,9 @@ EFI_STATUS efi_main (EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
     //InitializeLib efi libary system table and image handle 
     InitializeLib(imageHandle, systemTable);
     //Clear the screen of current contents. As it could still have left overs from the firmware manaufacter such as the motherboard logo.
-
+    
+    //Testin something
+    EFI_STATUS status; 
     
     clr_scr(); 
     Print(welcomeMsg, EFILOADER_VER_MAJ, EFILOADER_VER_MIN, EFILOADER_STABLE);
@@ -74,20 +81,37 @@ EFI_STATUS efi_main (EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
     if(kerImg == NULL) Print((CHAR16 *)L"Unable to load kernel image\r\n");
     else Print((CHAR16 *)L"Kernel successfully loaded\r\n");
     
-    Elf64_Ehdr header;
+    //Currently working directly off the kernels offset future plan is to have this changed to work with the kernels elf header to tell what this should be. But having it as a hard coded var makes testing a little easier
+    kerImg += 4096;
+    
+    //Define the kernel Start
+    int(*KernelStart)() = ((__attribute__((sysv_abi)) int(*)() ) kerImg); 
 
-    Print((CHAR16*)L"%d\r\n", sizeof(header));
+    //InitializeLib some vars we will use to get memory map
+    UINTN memMapSize = 0, descriptSize, mapKey;
+    EFI_MEMORY_DESCRIPTOR *memMap = NULL;
+    UINT32 descriptVer;
 
-    //Get computer memory map for use later
-   
-    kerImg += 0x1000;
-    //Attempt to boot our kernel
-    int(*KernelStart)() = ((__attribute__((sysv_abi)) int(*)() ) kerImg);
+    uefi_call_wrapper(ST->BootServices->GetMemoryMap, 5 memMapSize, memMap, NULL, descriptSize, NULL);
+    
+    //Fill in the memory map size;
+    memMapSize += 2 * descriptSize;
 
+    //AllocatePool for our memory map using our defined size from before.
+    uefi_call_wrapper(ST->BootServices->AllocatePool, 3, EfiLoaderData, memMapSize, (void**)memMap);
+    
+
+    //Get the actual memory map
+    uefi_call_wrapper(ST->BootServices->GetMemoryMap, 5, memMapSize, memMap, mapKey, descriptSize, descriptVer);
+
+
+    uefi_call_wrapper(ST->BootServices->ExitBootServices, 2, imageHandle, mapKey);    
+
+    //Call our kernel 
     Print((CHAR16 *)L"%d\r\n", KernelStart());
-    //Wait for user input this is good for testing output
-    Print((CHAR16 *)L"Press any key to exit...\r\n");
-    WaitForSingleEvent(ST->ConIn->WaitForKey, 0);
+    
+    uefi_call_wrapper(RT->ResetSystem, 1, EfiResetShutdown);
+
     return EFI_SUCCESS;
 }
 
