@@ -1,6 +1,7 @@
-#include <efi/efi.h>
-#include <efi/efilib.h>
+#include "../gnu-efi-code/inc/efi.h"
+#include "../gnu-efi-code/inc/efilib.h"
 #include <elf.h> 
+
 #include "../includes/efi-loader.h"
 
 //Remember uefi call wrapper layout
