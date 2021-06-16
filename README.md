@@ -9,4 +9,4 @@ Please before running make. Check you have all the Submodules needed by this pro
 only git submodule update --init is technically needed. However recursive will ensure that any Submodules of sub modules will be downloaded and --remote just ensure you get the latest version.
 
 # how to make 
-First you need to make gnuefi. So `cd gnuefi dir` then run `make` inside that folder. Then simply return to this repos folder and run the make command.
+First you need to make gnuefi. So `cd gnuefi dir` then run `make` inside that folder. Then simply return to this repos folder and run the `make` command, to create the efi bootloader. You may also want to compile the OVMFX64 pkg of the EDK2 submodule to make testing in VM possible for the sake of convience.
