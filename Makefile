@@ -13,7 +13,7 @@ OBJCFLAGS=-j .text -j .sdata -j .data -j .dynamic -j .dynsym  -j .rel -j .rela -
 BUILD=build
 
 
-$(EFITARGET): $(BUILD) ./$(BUILD)/main.so 
+$(EFIBOOT): $(BUILD) ./$(BUILD)/main.so 
 	$(OBJC) $(OBJCFLAGS) ./build/main.so $@
 
 ./$(BUILD)/main.so: ./$(BUILD)/main.o 
@@ -28,4 +28,4 @@ $(BUILD):
 .PHONY: clean 
 
 clean: 
-	rm -rf $(BUILD) $(EFITARGET)
+	rm -rf $(BUILD) $(EFIBOOT)
