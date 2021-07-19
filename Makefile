@@ -1,11 +1,11 @@
 include ./Makefile.var
 
 CC=gcc
-CFLAGS=-fpic -ffreestanding -fno-stack-protector -fno-stack-check -fshort-wchar -mno-red-zone -maccumulate-outgoing-args  
+CFLAGS=-nostdlib -maccumulate-outgoing-args -fpic -ffreestanding -fno-stack-protector -fno-stack-check -fshort-wchar -mno-red-zone   
 CCINC=-I./includes/ -I./gnu-efi-code/inc/ -I./gnu-efi-code/inc/protocol/ -I./gnu-efi-code/inc/x86_64/
 ##Linker settings
 LD=ld
-LFLAGS=-shared -Bsymbolic -L./gnu-efi-code/x86_64/gnuefi -L./gnu-efi-code/x86_64/lib -T./gnu-efi-code/gnuefi/elf_x86_64_efi.lds 
+LFLAGS=-shared -nostdlib -Bsymbolic -L./gnu-efi-code/x86_64/gnuefi -L./gnu-efi-code/x86_64/lib -T./gnu-efi-code/gnuefi/elf_x86_64_efi.lds 
 LIBS=-lefi -lgnuefi
 ##objcopy settings
 OBJC=objcopy 

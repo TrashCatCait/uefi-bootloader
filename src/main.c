@@ -32,14 +32,12 @@ typedef struct {
 
 //Get volume to load files from. We use the imagehandle from efi main to get the ESP partition.
 //This application was loaded from. Then we use libOpenRoot to open the root volume in a file handle
-EFI_STATUS check_error(EFI_STATUS status, CHAR16 *Action)
+EFI_STATUS check_error(EFI_STATUS status, CHAR16 *action)
 {
     if(status != EFI_SUCCESS)
     {
-        Print((CHAR16 *)L"EFI call %s failed. With error %r", Action, status);
-        while (1) {
-        
-        }
+        Print((CHAR16 *)L"EFI call %s failed. With error %r", action, status);
+        while(1){}
     }
     return EFI_SUCCESS;
 }
