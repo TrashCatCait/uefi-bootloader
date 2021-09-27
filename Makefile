@@ -12,14 +12,16 @@ OBJC=objcopy
 OBJCFLAGS=-j .text -j .sdata -j .data -j .dynamic -j .dynsym  -j .rel -j .rela -j .rel.* -j .rela.* -j .reloc --target efi-app-x86_64 --subsystem=10
 BUILD=build
 
+SRCFILES=$(wildcard ./src/*.c)
+OBJFILES=$(patsubst ./src/%.c, $(BUILD)/%.o, $(SRCFILES))
 
 $(EFIBOOT): $(BUILD) ./$(BUILD)/main.so 
 	$(OBJC) $(OBJCFLAGS) ./build/main.so $@
 
-./$(BUILD)/main.so: ./$(BUILD)/main.o 
+./$(BUILD)/main.so: $(OBJFILES) 
 	$(LD) $(LFLAGS) ./gnu-efi-code/x86_64/gnuefi/crt0-efi-x86_64.o $^ -o $@ -lgnuefi -lefi
 
-./$(BUILD)/main.o: ./src/main.c
+./$(BUILD)/%.o: ./src/%.c
 	$(CC) $(CCINC) $(CFLAGS) -c $^ -o $@
 
 $(BUILD): 
