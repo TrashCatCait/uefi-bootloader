@@ -35,6 +35,9 @@ If issues are encountered during building make sure you have the tools installed
 ### Other/Runtime Issues:
 So if you encounter a problem during running and you suspect it's a bug or mistake please file a detailed report. Describing the bug and anything you did to cause it and the type of media you booted off of and any other details that are relevant for example a display/graphics issue. please include details about you display/graphics setup.
 
+### Known Issues:
+- On some B450 motherboards GOP doesn't seem to be set correctly and it seems to always revert to 1024x768 or just report as such(not sure yet)
+
 ---
 
 # Contributing: 
