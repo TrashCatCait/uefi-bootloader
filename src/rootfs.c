@@ -13,8 +13,8 @@ EFI_FILE_HANDLE open_rootfs(EFI_HANDLE img) {
         Print((CHAR16*)L"Error BS->HandleProtocol call, image_guid");
         return NULL;
     } else {
-        Print((CHAR16*)L"Opened rootfs");
-        loaded_root = LibOpenRoot(&loaded_image->DeviceHandle);
+        Print((CHAR16*)L"Opened rootfs\n");
+        loaded_root = LibOpenRoot(loaded_image->DeviceHandle);
         return loaded_root; 
     }
 }
