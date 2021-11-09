@@ -2,3 +2,4 @@ build
 bootx64.efi
 main.*
 iso
+Ovmf

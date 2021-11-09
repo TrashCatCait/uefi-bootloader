@@ -1,12 +1,17 @@
 #include <efi.h>
 #include <efilib.h>
 #include <utils.h>
+#include <types.h>
+
 //Sets the screen to the largest resolution GOP mode found
-EFI_STATUS set_gop_mode(EFI_GRAPHICS_OUTPUT_PROTOCOL* gop, EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info) {
+framebfr_t* set_gop_mode(EFI_GRAPHICS_OUTPUT_PROTOCOL* gop, EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info) {
+    //EFI status return to check for errros 
     EFI_STATUS status;
+
+    //Initialize all vars we will need
     UINTN infosize, num_modes, native_mode, largest_mode = 0;
     UINT32 largest_h = 0, largest_v = 0;
-
+    framebfr_t *ret;
     EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 
     status = uefi_call_wrapper(BS->LocateProtocol, 3, &gop_guid, NULL, (void**)&gop); //;locate the GOP protocol and file the gop variable with it 
@@ -45,5 +50,12 @@ EFI_STATUS set_gop_mode(EFI_GRAPHICS_OUTPUT_PROTOCOL* gop, EFI_GRAPHICS_OUTPUT_M
 
     clr_scr();
     Print((CHAR16 *)L"EFI Initialized screen with %dx%d resolution with mode: %d\r\n", gop->Mode->Info->HorizontalResolution, gop->Mode->Info->VerticalResolution, gop->Mode->Mode); 
-    return EFI_SUCCESS;
+    
+    ret->buffer_base = (void *)gop->Mode->FrameBufferBase;
+    ret->size = gop->Mode->FrameBufferSize;
+    ret->height = gop->Mode->Info->VerticalResolution;
+    ret->width = gop->Mode->Info->HorizontalResolution;
+    ret->ppsl = gop->Mode->Info->PixelsPerScanLine;
+    
+    return ret;
 }
